@@ -1,0 +1,52 @@
+
+
+if first time tool not there 
+npm install -g firebase-tools
+
+
+
+firebase init
+
+y
+down arrow enter into app host with space then enter
+
+# 1. Log in to Firebase
+firebase login
+
+# 2. Create the new project
+firebase projects:create ianalyst-frontend-v2-mcp "iAnalyst Frontend v2 MCP"
+firebase projects:list
+firebase use ianalyst-frontend-v2-mcp
+
+
+# 3. Link your local folder to the new project
+firebase use --add
+
+# 4. Set up hosting (will auto-create firebase.json)
+firebase init hosting
+
+# 5. Build your app
+npm run build
+
+# 6. Deploy to hosting
+firebase deploy --only hosting
+
+
+
+
+firebase.json
+ 
+ 
+{
+  "hosting": {
+    "public": "static",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}

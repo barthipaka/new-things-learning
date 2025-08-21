@@ -1,0 +1,79 @@
+pipeline {
+    agent any
+
+    environment {
+        containerRegistryName = 'cglensecontainerregistry.azurecr.io'
+        dockerImageName = 'presales'
+        containerName = 'presales_dev'  // Variable for container name
+        containerPort = '8561'           // Variable for container port
+        hostPort = '8561'                // Variable for host port
+    }
+
+    stages {
+        stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    // Get the latest commit hash
+                    def hash = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    echo "Commit Hash: ${hash}"
+
+                    // Access the Jenkins build number from the environment variable
+                    def buildNumber = env.BUILD_NUMBER
+                    echo "Build Number: ${buildNumber}"
+
+                    // Build Docker image with commit hash tag
+                    sh "docker build . -t ${dockerImageName}:${hash}"
+
+                    // Tag Docker image with build number
+                    sh "docker tag ${dockerImageName}:${hash} ${containerRegistryName}/${dockerImageName}:${buildNumber}"
+
+                    // Docker login and push the image tagged with build number
+                    withCredentials([usernamePassword(credentialsId: 'dockerCredentialsId', usernameVariable: 'D_USERNAME', passwordVariable: 'D_PASSWORD')]) {
+                        sh "echo ${D_PASSWORD} | docker login ${containerRegistryName} -u ${D_USERNAME} --password-stdin"
+                        sh "docker push ${containerRegistryName}/${dockerImageName}:${buildNumber}"
+                    }
+                }
+            }
+        }
+
+        stage('Pull and Run Docker Image') {
+            steps {
+                script {
+                    // Pull the Docker image using the build number
+                    sh "docker pull ${containerRegistryName}/${dockerImageName}:${env.BUILD_NUMBER}"
+
+                    // Check if the container already exists
+                    def containerExists = sh(script: "docker ps -a --filter 'name=${containerName}' --format '{{.Names}}'", returnStdout: true).trim()
+
+                    if (containerExists == "${containerName}") {
+                        echo "Container ${containerName} exists. Stopping and removing it..."
+                        sh "docker stop ${containerName}"
+                        sh "docker rm ${containerName}"
+                    } else {
+                        echo "Container ${containerName} does not exist. Proceeding to run..."
+                    }
+
+                    // Run the Docker container with the pulled image
+                    sh "docker run --name ${containerName} -d -p ${hostPort}:${containerPort} ${containerRegistryName}/${dockerImageName}:${env.BUILD_NUMBER}"
+                }
+            }
+        }
+
+        stage('Cleanup Unused Containers and Images') {
+            steps {
+                script {
+                    // Force delete all stopped containers
+                    echo "Deleting unused containers..."
+                    sh "docker container prune -f"
+
+                    // Force delete all dangling images
+                    echo "Deleting unused images..."
+                    sh "docker image prune -f"
+
+                    // Confirm cleanup completion
+                    echo "Unused containers and images have been deleted."
+                }
+            }
+        }
+    }
+}

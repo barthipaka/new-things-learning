@@ -1,0 +1,22 @@
+Make sure ~/.ssh exists
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+
+Generate a 4096-bit RSA key
+ssh-keygen -t rsa -b 4096 -C "rakesh.barthipaka@covalenseglobal.com" -f ~/.ssh/id_rsa_linux
+
+
+Copy the public key (exact single-line OpenSSH format) past in the git in add new ssh key
+cat ~/.ssh/id_rsa_linux.pub
+
+
+
+Start the SSH agent
+eval "$(ssh-agent -s)"
+
+Add your key to the agent
+ssh-add ~/.ssh/id_rsa_linux
+
+Test the connection
+ssh -T git@github.com
+
