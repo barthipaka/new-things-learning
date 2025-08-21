@@ -1,0 +1,49 @@
+Prompt:
+🔍 Frontend Code Review — root-cause-analysis Module
+Note:
+UI uses mock data only, no API integration yet. Focus strictly on desktop and tablet responsiveness (mobile view excluded). Some existing code base constraints to be followed.
+Please assign a rating (1–10) for each area and provide brief improvement suggestions. Mark major or minor where applicable based on below points only.
+1. UI Responsiveness
+Checklist:
+Responsive on desktop and tablet viewports only (✅ No mobile view required)
+UI is developed to precisely match Figma designs; accessibility considerations such as WCAG compliance and semantic roles are intentionally excluded.
+Rating: ______ / 10
+Suggestions:
+…
+2. Code Quality & Structure
+Checklist:
+Clean, consistent, and readable code
+Proper naming conventions
+Modular structure and clear separation of concerns
+Meaningful comments or function descriptions
+Rating: ______ / 10
+Suggestions:
+…
+3. Styling & Theming (Tailwind CSS)
+Checklist:
+Efficient use of Tailwind utility classes
+Light/Dark theme support is implemented (if applicable)
+Visual design is consistent (spacing, typography, colors)
+Rating: ______ / 10
+Suggestions:
+…
+4. State Management & Component Reusability
+Checklist:
+Uses valtio (if require )or other state management properly (scoped, immutable)
+Clear data flow with low coupling
+Components are modular, reusable, and DRY
+Rating: ______ / 10
+Suggestions:
+…
+5. Performance & UI Behaviour Readiness (No API in scope)
+Checklist:
+Avoids unnecessary re-renders
+Handles mocked loading, error, and empty states gracefully
+UI is structured to easily swap mock data with real APIs
+Rating: ______ / 10
+Suggestions:
+…
+⭐ Overall Implementation Score
+Total Score: ______ / 10
+Final Feedback / Observations:
+…
