@@ -1,0 +1,65 @@
+{
+  "worker_name": "product_competitor_price_analyzer",
+  "description": "Provides a joined view of our products and competitor pricing information.",
+  "knowledge": "Use this worker to compare our product prices against similar products from other brands. The join is performed between product_master.product_name and product_price_compare.product. All prices and sizes are included for direct comparison. Allways use Column Aliases (use snake case) in select statement as it is a join query.",
+  "max_limits": {
+    "max_rows": 1000,
+    "max_filters": 5,
+    "max_aggregations": 4,
+    "max_group_by_columns": 3
+  },
+  "source": {
+    "type": "MULTI_TABLE_JOIN",
+    "config": {
+      "tables": [
+        {
+          "name": "product_master",
+          "alias": "pm"
+        },
+        {
+          "name": "product_price_compare",
+          "alias": "ppc"
+        }
+      ],
+      "joins": [
+        {
+          "type": "INNER",
+          "left_table_alias": "pm",
+          "right_table_alias": "ppc",
+          "on": "pm.product_name = ppc.product"
+        }
+      ]
+    }
+  },
+  "columns": [
+    { "name": "pm.id", "type": "serial4", "description": "Our product's unique ID.", "is_nullable": false, "is_pii": false },
+    { "name": "pm.product_name", "type": "text", "description": "Our product's name.", "is_nullable": true, "is_pii": false },
+    { "name": "pm.category", "type": "text", "description": "The category of our product (e.g., 'Cleanser', 'Moisturizer').", "is_nullable": true, "is_pii": false },
+    { "name": "pm.customer_target", "type": "text", "description": "The target audience for our product.", "is_nullable": true, "is_pii": false },
+    { "name": "pm.price", "type": "numeric", "description": "The retail price of our product.", "is_nullable": true, "is_pii": false },
+    { "name": "pm.price_per_unit", "type": "numeric", "description": "The price per unit (e.g., per ml/g) of our product.", "is_nullable": true, "is_pii": false },
+    { "name": "ppc.brand", "type": "text", "description": "The competitor brand name.", "is_nullable": true, "is_pii": false },
+    { "name": "ppc.similar_product", "type": "text", "description": "The name of the similar competitor product.", "is_nullable": true, "is_pii": false },
+    { "name": "ppc.price", "type": "numeric", "description": "The retail price of the competitor product.", "is_nullable": true, "is_pii": false },
+    { "name": "ppc.pricer_per_unit", "type": "numeric", "description": "The price per unit of the competitor product.", "is_nullable": true, "is_pii": false },
+    { "name": "ppc.price_difference", "type": "numeric", "description": "The calculated price difference between our product and the competitor's.", "is_nullable": true, "is_pii": false }
+  ],
+  "filters": [
+    { "column": "pm.category", "operators": ["=", "IN", "!="], "description": "Filter by our product category." },
+    { "column": " pm.product_name", "operators": ["=", "IN", "!="], "description": "Filter by our product name. Always use lower on both side" },
+    { "column": "ppc.brand", "operators": ["=", "IN", "!="], "description": "Filter by competitor brand." },
+    { "column": "pm.price", "operators": [">", "<", ">=", "<="], "description": "Filter by our product's price." },
+    { "column": "ppc.price_difference", "operators": [">", "<"], "description": "Filter for products where the price difference is positive or negative." }
+  ],
+  "aggregations": [
+    { "function": "AVG", "applicable_columns": ["pm.price", "ppc.price", "ppc.price_difference"], "alias_template": "avg_{column}" },
+    { "function": "MIN", "applicable_columns": ["pm.price", "ppc.price"], "alias_template": "min_{column}" },
+    { "function": "MAX", "applicable_columns": ["pm.price", "ppc.price"], "alias_template": "max_{column}" },
+    { "function": "COUNT", "applicable_columns": ["*"], "alias_template": "count_of_records" }
+  ],
+  "group_by_options": [
+    "pm.category",
+    "pm.customer_target",
+    "ppc.brand"
+  ]
+}

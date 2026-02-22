@@ -1,0 +1,51 @@
+{
+  "worker_name": "customer_order_analyzer",
+  "description": "Provides a joined view of orders and customer information.",
+  "knowledge": "Use this worker to analyze order totals by customer demographics like city or state. The primary key is order_id.",
+  "max_limits": {
+    "max_rows": 2000,
+    "max_filters": 5,
+    "max_aggregations": 3,
+    "max_group_by_columns": 3
+  },
+  "source": {
+    "type": "MULTI_TABLE_JOIN",
+    "config": {
+      "tables": [
+        {"name": "orders", "alias": "o"},
+        {"name": "customers", "alias": "c"}
+      ],
+      "joins": [
+        {
+          "type": "INNER",
+          "left_table_alias": "o",
+          "right_table_alias": "c",
+          "on": "o.customer_id = c.id"
+        }
+      ]
+    }
+  },
+  "columns": [
+    { "name": "o.id", "type": "integer", "description": "The unique order ID.", "is_nullable": false, "is_pii": false },
+    { "name": "o.order_date", "type": "date", "description": "Date the order was placed.", "is_nullable": false, "is_pii": false },
+    { "name": "o.order_total", "type": "numeric", "description": "Total value of the order.", "is_nullable": false, "is_pii": false },
+    { "name": "c.customer_name", "type": "text", "description": "Name of the customer.", "is_nullable": true, "is_pii": true },
+    { "name": "c.city", "type": "text", "description": "Customer's city.", "is_nullable": true, "is_pii": false },
+    { "name": "c.state", "type": "text", "description": "Customer's state.", "is_nullable": true, "is_pii": false }
+  ],
+  "filters": [
+    { "column": "c.state", "operators": ["=", "IN"], "description": "Filter by customer state (e.g., 'CA', 'NY')." },
+    { "column": "o.order_date", "operators": [">=", "<"], "description": "Filter by a date range." },
+    { "column": "o.order_total", "operators": [">", "<="], "description": "Filter by order value." }
+  ],
+  "aggregations": [
+    { "function": "SUM", "applicable_columns": ["o.order_total"], "alias_template": "total_sales" },
+    { "function": "AVG", "applicable_columns": ["o.order_total"], "alias_template": "average_sale" },
+    { "function": "COUNT", "applicable_columns": ["o.id"], "alias_template": "number_of_orders" }
+  ],
+  "group_by_options": [
+    "c.state",
+    "c.city",
+    "o.order_date"
+  ]
+}

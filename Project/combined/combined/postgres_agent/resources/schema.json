@@ -1,0 +1,30 @@
+{
+  "worker_name": "monthly_category_sales_summary",
+  "description": "Provides pre-aggregated monthly sales data by product category.",
+  "knowledge": "This data is already summarized. You can filter by month or category. Use it for high-level trend analysis.",
+  "max_limits": { "max_rows": 500, "max_filters": 3, "max_aggregations": 2, "max_group_by_columns": 1 },
+  "source": {
+    "type": "CTE",
+    "config": {
+      "cte_name": "MonthlySales",
+      "cte_sql": "WITH MonthlySales AS (\n  SELECT\n    p.category,\n    DATE_TRUNC('month', s.sale_date)::date AS sales_month,\n    SUM(s.sale_amount) AS total_sales,\n    COUNT(s.id) AS transaction_count\n  FROM sales s\n  JOIN product_master p ON s.product_id = p.id\n  GROUP BY p.category, DATE_TRUNC('month', s.sale_date)\n)\n"
+    }
+  },
+  "columns": [
+    { "name": "category", "type": "text", "description": "The product category.", "is_nullable": false, "is_pii": false },
+    { "name": "sales_month", "type": "date", "description": "The first day of the sales month.", "is_nullable": false, "is_pii": false },
+    { "name": "total_sales", "type": "numeric", "description": "Total sales amount for that category and month.", "is_nullable": false, "is_pii": false },
+    { "name": "transaction_count", "type": "integer", "description": "Number of transactions.", "is_nullable": false, "is_pii": false }
+  ],
+  "filters": [
+    { "column": "category", "operators": ["=", "IN"], "description": "Filter by one or more categories." },
+    { "column": "sales_month", "operators": [">=", "<", "="], "description": "Filter by a specific month or range." }
+  ],
+  "aggregations": [
+    { "function": "SUM", "applicable_columns": ["total_sales", "transaction_count"], "alias_template": "grand_total_{column}" },
+    { "function": "AVG", "applicable_columns": ["total_sales"], "alias_template": "avg_monthly_sales" }
+  ],
+  "group_by_options": [
+    "category"
+  ]
+}

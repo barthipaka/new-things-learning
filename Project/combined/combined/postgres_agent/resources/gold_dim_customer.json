@@ -1,0 +1,44 @@
+{
+  "worker_name": "gold_dim_customer_analyzer",
+  "description": "Provides customer demographic and CRM profile information.",
+  "knowledge": "This worker supports analysis of customer lifecycle status, contact information, city segmentation, onboarding timelines, and CRM profile details.",
+  "knowledge_base": "gold_dim_customer",
+  "database_info": {
+    "type": "postgres",
+    "schema": "public"
+  },
+  "max_limits": {
+    "max_rows": 2000,
+    "max_filters": 7,
+    "max_aggregations": 5,
+    "max_group_by_columns": 6
+  },
+  "source": {
+    "type": "PHYSICAL_TABLE",
+    "config": {
+      "table_name": "gold_dim_customer"
+    }
+  },
+  "columns": [
+    { "name": "customer_key", "type": "text", "description": "Primary key for customer entity.", "requires_quotes": true, "is_nullable": false, "is_pii": false },
+    { "name": "crm_id", "type": "text", "description": "CRM system identifier.", "requires_quotes": true, "is_nullable": true, "is_pii": false },
+    { "name": "email", "type": "text", "description": "Customer email address.", "requires_quotes": true, "is_nullable": true, "is_pii": true },
+    { "name": "phone", "type": "text", "description": "Customer phone number.", "requires_quotes": true, "is_nullable": true, "is_pii": true },
+    { "name": "first_name", "type": "text", "description": "Customer first name.", "requires_quotes": true, "is_nullable": true, "is_pii": true },
+    { "name": "last_name", "type": "text", "description": "Customer last name.", "requires_quotes": true, "is_nullable": true, "is_pii": true },
+    { "name": "city", "type": "text", "description": "Customer city.", "requires_quotes": true, "is_nullable": true, "is_pii": false },
+    { "name": "status", "type": "text", "description": "Customer lifecycle status.", "requires_quotes": true, "is_nullable": true, "is_pii": false },
+    { "name": "effective_date", "type": "timestamp", "description": "Record validity starting timestamp.", "requires_quotes": true, "is_nullable": true, "is_pii": false },
+    { "name": "end_date", "type": "timestamp", "description": "Record validity ending timestamp.", "requires_quotes": true, "is_nullable": true, "is_pii": false },
+    { "name": "is_current", "type": "boolean", "description": "Indicates if the record is current.", "requires_quotes": false, "is_nullable": true, "is_pii": false }
+  ],
+  "filters": [
+    { "column": "city", "operators": ["=", "IN"], "description": "Filter by customer city." },
+    { "column": "status", "operators": ["=", "IN"], "description": "Filter by lifecycle status." },
+    { "column": "is_current", "operators": ["=", "!=", "IN"], "description": "Filter active or expired records." }
+  ],
+  "aggregations": [
+    { "function": "COUNT", "applicable_columns": ["customer_key"], "alias_template": "count_customers" }
+  ],
+  "group_by_options": ["city", "status", "is_current"]
+}

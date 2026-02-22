@@ -1,0 +1,41 @@
+{
+  "worker_name": "gold_fact_orders_analyzer",
+  "description": "Analyzes customer orders including transaction date, value, item count, and payment status.",
+  "knowledge": "This worker helps derive insights from order-level facts such as total revenue, payment completion rates, and order frequency trends.",
+  "knowledge_base": "gold_fact_orders",
+  "database_info": {
+    "type": "postgres",
+    "schema": "public"
+  },
+  "max_limits": {
+    "max_rows": 2000,
+    "max_filters": 6,
+    "max_aggregations": 8,
+    "max_group_by_columns": 5
+  },
+  "source": {
+    "type": "PHYSICAL_TABLE",
+    "config": {
+      "table_name": "gold_fact_orders"
+    }
+  },
+  "columns": [
+    { "name": "order_key", "type": "text", "description": "Unique identifier for an order.", "requires_quotes": true, "is_nullable": false, "is_pii": false },
+    { "name": "customer_key", "type": "text", "description": "Foreign key mapping to customer.", "requires_quotes": true, "is_nullable": false, "is_pii": false },
+    { "name": "order_date_key", "type": "date", "description": "Date when the order was placed.", "requires_quotes": true, "is_nullable": true, "is_pii": false },
+    { "name": "total_amount", "type": "float", "description": "Total amount of the order.", "requires_quotes": false, "is_nullable": true, "is_pii": false },
+    { "name": "line_items_count", "type": "integer", "description": "Total number of items in the order.", "requires_quotes": false, "is_nullable": true, "is_pii": false },
+    { "name": "order_status", "type": "text", "description": "Order status such as PAID, PENDING, or REFUNDED.", "requires_quotes": true, "is_nullable": true, "is_pii": false }
+  ],
+  "filters": [
+    { "column": "order_status", "operators": ["=", "IN"], "description": "Filter orders based on status." },
+    { "column": "order_date_key", "operators": [">=", "<", "="], "description": "Filter by date or date range." },
+    { "column": "total_amount", "operators": [">", "<="], "description": "Filter based on amount value." }
+  ],
+  "aggregations": [
+    { "function": "SUM", "applicable_columns": ["total_amount"], "alias_template": "total_<column_name>" },
+    { "function": "AVG", "applicable_columns": ["total_amount"], "alias_template": "avg_<column_name>" },
+    { "function": "COUNT", "applicable_columns": ["order_key"], "alias_template": "count_<column_name>" }
+  ],
+  "group_by_options": ["order_status", "order_date_key"]
+}
